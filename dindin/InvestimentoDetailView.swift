@@ -37,9 +37,6 @@ struct InvestimentoDetailView: View {
                 }
             }
             .padding()
-            .onAppear {
-                print("[InvestimentoDetailView] body construído para id: \(investmentId)")
-            }
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -83,8 +80,8 @@ struct InvestimentoDetailView: View {
             }
         )
         .onAppear {
-            print("[InvestimentoDetailView] onAppear chamado para id: \(investmentId)")
-            Task { await store.fetchInvestmentDetail(by: investmentId) }
+            debugPrint("[DEBUG] View appeared for investment ID: \(investmentId)")
+            Task { await fetchData() }
         }
         .refreshable {
             await store.fetchInvestmentDetailFromAPI(id: investmentId)
@@ -109,12 +106,17 @@ struct InvestimentoDetailView: View {
     }
 
     private func fetchData() async {
-        print("[InvestimentoDetailView] fetchData chamado para id: \(investmentId)")
+        debugPrint("[DEBUG] fetchData started for id: \(investmentId)")
         isLoading = true
         errorMessage = nil
         do {
             await store.fetchInvestmentDetail(by: investmentId)
+            debugPrint("[DEBUG] fetchData completed. Investment detail: \(String(describing: store.investmentDetail))")
+            if let transactions = store.investmentDetail?.transactions {
+                debugPrint("[DEBUG] Transactions count: \(transactions.count)")
+            }
         } catch {
+            debugPrint("[DEBUG] Error fetching data: \(error)")
             errorMessage = "Não foi possível carregar os dados do investimento. Tente novamente."
         }
         isLoading = false
@@ -241,6 +243,9 @@ struct InvestimentoDetailView: View {
             }
         }
         .padding(.top)
+        .onAppear {
+            debugPrint("[DEBUG] Content section appeared with tab: \(selectedTab)")
+        }
     }
 
     private var graficoSection: some View {
@@ -256,28 +261,53 @@ struct InvestimentoDetailView: View {
     }
 
     private var transacoesSection: some View {
-        VStack(spacing: 12) {
-            ForEach(Array((store.investmentDetail?.transactions ?? RealmSwift.List<InvestmentTransaction>()).sorted(by: { $0.date > $1.date })), id: \.id) { transacao in
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(formattedDate(transacao.date))
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                        Text(transacao.descriptionText)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+        VStack(spacing: 0) {
+            if let transactions = store.investmentDetail?.transactions {
+                let sortedTransactions = Array(transactions.sorted(by: { $0.date > $1.date }))
+                
+                if sortedTransactions.isEmpty {
+                    emptyStateView(message: "Não há transações disponíveis")
+                        .padding(.top, 20)
+                } else {
+                    ForEach(sortedTransactions) { transacao in
+                        TransactionRow(transaction: transacao, onDelete: { transaction in
+                            deleteTransaction(transaction)
+                        })
+                        
+                        if transacao.id != sortedTransactions.last?.id {
+                            Divider()
+                                .padding(.horizontal, 16)
+                        }
                     }
-                    Spacer()
-                    Text(transacao.value, format: .currency(code: "BRL"))
-                        .fontWeight(.bold)
-                        .foregroundColor(transacao.value >= 0 ? .green : .red)
                 }
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(10)
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("\(formattedDate(transacao.date)), \(transacao.descriptionText), \(formatCurrency(transacao.value))")
+            } else {
+                emptyStateView(message: "Não há transações disponíveis")
+                    .padding(.top, 20)
             }
+        }
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+    }
+
+    private func deleteTransaction(_ transaction: InvestmentTransaction) {
+        guard let investimento = store.investmentDetail else { return }
+        
+        do {
+            let realm = try Realm()
+            if let thawedInvestimento = investimento.thaw(),
+               let transactionToDelete = thawedInvestimento.transactions.first(where: { $0.id == transaction.id }) {
+                try realm.write {
+                    // Ajusta o saldo atual removendo o valor da transação
+                    thawedInvestimento.currentBalance -= transaction.value
+                    // Remove a transação
+                    realm.delete(transactionToDelete)
+                }
+                Task {
+                    await store.fetchInvestmentDetail(by: investimento.id)
+                }
+            }
+        } catch {
+            errorMessage = "Erro ao excluir transação."
         }
     }
 
@@ -307,5 +337,69 @@ struct InvestimentoDetailView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value)")
+    }
+}
+
+struct TransactionRow: View {
+    let transaction: InvestmentTransaction
+    let onDelete: (InvestmentTransaction) -> Void
+    @State private var showingDeleteAlert = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            // Linha superior com data
+            Text(formattedDate(transaction.date))
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.primary)
+            
+            // Linha inferior com descrição e valor
+            HStack {
+                Text(transaction.descriptionText)
+                    .font(.system(size: 15))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                
+                Spacer()
+                
+                Text(formatCurrency(transaction.value))
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(transaction.value >= 0 ? Color.green : Color.red)
+            }
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .background(Color(.systemBackground))
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button(role: .destructive) {
+                showingDeleteAlert = true
+            } label: {
+                Label("Excluir", systemImage: "trash")
+            }
+        }
+        .alert("Confirmar Exclusão", isPresented: $showingDeleteAlert) {
+            Button("Cancelar", role: .cancel) { }
+            Button("Excluir", role: .destructive) {
+                onDelete(transaction)
+            }
+        } message: {
+            Text("Deseja realmente excluir esta transação? Esta ação não pode ser desfeita.")
+        }
+    }
+    
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd/MM/yyyy"
+        formatter.locale = Locale(identifier: "pt_BR")
+        return formatter.string(from: date)
+    }
+    
+    private func formatCurrency(_ value: Double) -> String {
+        let isNegative = value < 0
+        let absoluteValue = abs(value)
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = Locale(identifier: "pt_BR")
+        let formattedValue = formatter.string(from: NSNumber(value: absoluteValue)) ?? "R$ 0,00"
+        return (isNegative ? "- " : "+ ") + formattedValue
     }
 }
