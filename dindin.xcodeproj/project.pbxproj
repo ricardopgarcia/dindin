@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		92F432D92DC014B40021EB58 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 92F432D82DC014B40021EB58 /* RealmSwift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		92F4326D2DC00D6B0021EB58 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -29,9 +33,22 @@
 		92F432762DC00D6B0021EB58 /* dindinUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = dindinUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		92F432D62DC013D40021EB58 /* Exceptions for "dindin" folder in "dindin" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 92F432592DC00D6A0021EB58 /* dindin */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		92F4325C2DC00D6A0021EB58 /* dindin */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				92F432D62DC013D40021EB58 /* Exceptions for "dindin" folder in "dindin" target */,
+			);
 			path = dindin;
 			sourceTree = "<group>";
 		};
@@ -52,6 +69,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				92F432D92DC014B40021EB58 /* RealmSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +130,7 @@
 			);
 			name = dindin;
 			packageProductDependencies = (
+				92F432D82DC014B40021EB58 /* RealmSwift */,
 			);
 			productName = dindin;
 			productReference = 92F4325A2DC00D6A0021EB58 /* dindin.app */;
@@ -195,6 +214,9 @@
 			);
 			mainGroup = 92F432512DC00D6A0021EB58;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				92F432D72DC014B40021EB58 /* XCRemoteSwiftPackageReference "realm-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 92F4325B2DC00D6A0021EB58 /* Products */;
 			projectDirPath = "";
@@ -558,6 +580,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		92F432D72DC014B40021EB58 /* XCRemoteSwiftPackageReference "realm-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/realm/realm-swift";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		92F432D82DC014B40021EB58 /* RealmSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 92F432D72DC014B40021EB58 /* XCRemoteSwiftPackageReference "realm-swift" */;
+			productName = RealmSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 92F432522DC00D6A0021EB58 /* Project object */;
 }

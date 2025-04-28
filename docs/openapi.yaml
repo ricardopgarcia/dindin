@@ -1,0 +1,142 @@
+openapi: 3.0.3
+info:
+  title: DinDin API
+  version: 1.0.0
+  description: API para processamento e consulta de extratos bancários OFX.
+servers:
+  - url: https://50917j6yoa.execute-api.sa-east-1.amazonaws.com/dev
+paths:
+  /accounts:
+    get:
+      summary: Lista contas do usuário
+      responses:
+        '200':
+          description: Lista de contas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                  example:
+                    - name: Conta Corrente
+                    - name: Cartão Nubank
+  /transactions:
+    get:
+      summary: Lista transações do extrato OFX
+      parameters:
+        - in: query
+          name: month
+          schema:
+            type: string
+            example: '2025-03'
+          description: Filtro por mês (YYYY-MM)
+        - in: query
+          name: category
+          schema:
+            type: string
+            example: Salário
+          description: Filtro por categoria
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [CREDIT, DEBIT]
+            example: CREDIT
+          description: Filtro por tipo de transação
+      responses:
+        '200':
+          description: Lista de transações agrupadas e estatísticas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: object
+                  transactions_by_month:
+                    type: object
+                  statistics:
+                    type: object
+              example:
+                summary:
+                  period:
+                    startDate: '2025-01-27'
+                    endDate: '2025-04-25'
+                  balance:
+                    amount: 17140.7
+                    date: '2025-04-25'
+                  total_transactions: 60
+                  total_credit: 97307.67
+                  total_debit: 118624.48
+                  net_balance: -21316.81
+                transactions_by_month:
+                  '2025-03':
+                    - type: CREDIT
+                      date_posted: '2025-03-06T10:00:00'
+                      amount: 89.07
+                      fitid: '20250306001'
+                      memo: JUROS POUPANCA SALARIO
+                      check_number: '20250306001'
+                      suggested_category: Rendimentos
+                statistics:
+                  by_category:
+                    Salário:
+                      total: 35393.5
+                      count: 4
+                      media: 8848.375
+                      maior: 11534.59
+                      menor: 4498.98
+  /ofx-parser:
+    post:
+      summary: Faz o parsing de um arquivo OFX enviado no body
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+            example: |
+              OFXHEADER:100
+              DATA:OFXSGML
+              ...
+      responses:
+        '200':
+          description: Dados estruturados do OFX
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  account:
+                    type: object
+                  period:
+                    type: object
+                  balance:
+                    type: object
+                  transactions:
+                    type: array
+                    items:
+                      type: object
+              example:
+                account:
+                  bankid: '0341'
+                  acctid: '6681020548'
+                  accttype: CHECKING
+                period:
+                  startDate: '2025-01-27'
+                  endDate: '2025-04-25'
+                balance:
+                  amount: 17140.7
+                  date: '2025-04-25'
+                transactions:
+                  - type: CREDIT
+                    date_posted: '2025-03-06T10:00:00'
+                    amount: 89.07
+                    fitid: '20250306001'
+                    memo: JUROS POUPANCA SALARIO
+                    check_number: '20250306001'
+                    suggested_category: Rendimentos 
