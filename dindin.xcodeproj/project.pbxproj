@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9262BCB32DC11CEB00FB22C9 /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 92F432D82DC014B40021EB58 /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		92F432D92DC014B40021EB58 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 92F432D82DC014B40021EB58 /* RealmSwift */; };
 /* End PBXBuildFile section */
 
@@ -26,6 +27,20 @@
 			remoteInfo = dindin;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9262BCB42DC11CEB00FB22C9 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				9262BCB32DC11CEB00FB22C9 /* RealmSwift in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		92F4325A2DC00D6A0021EB58 /* dindin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = dindin.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -120,6 +135,7 @@
 				92F432562DC00D6A0021EB58 /* Sources */,
 				92F432572DC00D6A0021EB58 /* Frameworks */,
 				92F432582DC00D6A0021EB58 /* Resources */,
+				9262BCB42DC11CEB00FB22C9 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -422,6 +438,7 @@
 				DEVELOPMENT_TEAM = X8NY5HJG8L;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -450,6 +467,7 @@
 				DEVELOPMENT_TEAM = X8NY5HJG8L;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

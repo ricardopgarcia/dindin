@@ -59,7 +59,7 @@ class InvestmentDetailStore: ObservableObject {
                 return
             }
 
-            let remoteDetail = try JSONDecoder().decode(RemoteStockDetail.self, from: data)
+            let remoteDetail = try JSONDecoder().decode(RemoteInvestmentDetail.self, from: data)
             print("✅ Dados recebidos da API para \(id). Atualizando Realm...")
 
             try? realm.write {
@@ -67,18 +67,8 @@ class InvestmentDetailStore: ObservableObject {
                 detail.id = remoteDetail.accountId
                 detail.name = remoteDetail.accountName
                 detail.type = "investimento"
-                detail.totalProfitability = remoteDetail.toBaseInvestment().totalProfitability
-                detail.annualProfitability = remoteDetail.toBaseInvestment().annualProfitability
-
-                // Adiciona os pontos do gráfico
-                let chartData: [InvestmentChartDataPoint] = remoteDetail.chartData.map {
-                    let point = InvestmentChartDataPoint()
-                    point.date = ISO8601DateFormatter().date(from: $0.date) ?? Date()
-                    point.value = $0.value
-                    return point
-                }
-                detail.chartData.removeAll()
-                detail.chartData.append(objectsIn: chartData)
+                detail.totalProfitability = remoteDetail.profitability.total
+                detail.annualProfitability = remoteDetail.profitability.annual
 
                 // Adiciona as transações
                 let transactions: [InvestmentTransaction] = remoteDetail.transactions.map {
