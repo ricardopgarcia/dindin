@@ -23,6 +23,7 @@ struct RemoteAccount: Codable, Identifiable {
 enum AccountType: String, Codable {
     case conta = "conta"
     case investimento = "investimento"
+    case cartao = "cartao"
 }
 
 // MARK: - Investment Types

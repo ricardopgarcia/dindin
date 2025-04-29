@@ -159,11 +159,9 @@ struct InvestimentoDetailView: View {
             Divider()
 
             HStack {
-                infoColumn(title: "Liquidez", value: store.investmentDetail?.liquidity ?? "-")
+                infoColumn(title: "Rentabilidade Total", value: formatPercentage(store.investmentDetail?.totalProfitability ?? 0))
                 Spacer()
-                infoColumn(title: "Rentabilidade", value: formatPercentage(store.investmentDetail?.annualProfitability ?? 0))
-                Spacer()
-                infoColumn(title: "Vencimento", value: formattedDate(store.investmentDetail?.maturityDate))
+                infoColumn(title: "Rentabilidade Anual", value: formatPercentage(store.investmentDetail?.annualProfitability ?? 0))
             }
             .padding(.top, 4)
         }

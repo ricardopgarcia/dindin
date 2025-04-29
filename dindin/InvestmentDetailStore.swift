@@ -48,6 +48,7 @@ class InvestmentDetailStore: ObservableObject {
             let (data, response) = try await URLSession.shared.data(from: url)
             print("🌐 Depois de chamar API para investimento \(id)")
             print("🌐 Dados brutos da API: \(String(data: data, encoding: .utf8) ?? "nil")")
+            
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
                 print("❌ Erro ao chamar API de detalhes para \(id)")
                 if let apiError = try? JSONDecoder().decode([String: String].self, from: data), let msg = apiError["error"] {
@@ -58,35 +59,28 @@ class InvestmentDetailStore: ObservableObject {
                 return
             }
 
-            let remoteDetail: RemoteInvestmentDetail = try JSONDecoder().decode(RemoteInvestmentDetail.self, from: data)
-
+            let remoteDetail = try JSONDecoder().decode(RemoteStockDetail.self, from: data)
             print("✅ Dados recebidos da API para \(id). Atualizando Realm...")
 
             try? realm.write {
                 let detail = InvestimentoDetail()
-                detail.id = remoteDetail.id
-                detail.name = remoteDetail.name
-                detail.type = remoteDetail.type
-                detail.category = remoteDetail.category
-                detail.currentBalance = remoteDetail.currentBalance
-                detail.initialInvestment = remoteDetail.initialInvestment
-                detail.totalProfitability = remoteDetail.totalProfitability
-                detail.annualProfitability = remoteDetail.annualProfitability
-                detail.liquidity = remoteDetail.liquidity
-                if let maturityDateString = remoteDetail.maturityDate {
-                    detail.maturityDate = ISO8601DateFormatter().date(from: maturityDateString) ?? Date()
-                } else {
-                    detail.maturityDate = Date.distantFuture // ou qualquer valor default desejado
-                }
+                detail.id = remoteDetail.accountId
+                detail.name = remoteDetail.accountName
+                detail.type = "investimento"
+                detail.totalProfitability = remoteDetail.toBaseInvestment().totalProfitability
+                detail.annualProfitability = remoteDetail.toBaseInvestment().annualProfitability
 
+                // Adiciona os pontos do gráfico
                 let chartData: [InvestmentChartDataPoint] = remoteDetail.chartData.map {
                     let point = InvestmentChartDataPoint()
                     point.date = ISO8601DateFormatter().date(from: $0.date) ?? Date()
                     point.value = $0.value
                     return point
                 }
+                detail.chartData.removeAll()
                 detail.chartData.append(objectsIn: chartData)
 
+                // Adiciona as transações
                 let transactions: [InvestmentTransaction] = remoteDetail.transactions.map {
                     let tx = InvestmentTransaction()
                     tx.id = $0.id
@@ -95,7 +89,13 @@ class InvestmentDetailStore: ObservableObject {
                     tx.value = $0.value
                     return tx
                 }
+                detail.transactions.removeAll()
                 detail.transactions.append(objectsIn: transactions)
+
+                // Define o saldo atual como o último valor do gráfico
+                if let lastPoint = remoteDetail.chartData.last {
+                    detail.currentBalance = lastPoint.value
+                }
 
                 realm.add(detail, update: .modified)
             }
@@ -109,30 +109,47 @@ class InvestmentDetailStore: ObservableObject {
     }
 }
 
-// DTO para a resposta da API
-struct RemoteInvestmentDetail: Codable {
+// MARK: - API Response Models
+struct RemoteInvestmentDetail: Decodable {
+    let accountName: String
+    let accountId: String
+    let profitability: RemoteProfitability
+    let chartData: [RemoteChartDataPoint]
+    let transactions: [RemoteTransaction]
+
+    enum CodingKeys: String, CodingKey {
+        case accountName = "account_name"
+        case accountId = "account_id"
+        case profitability
+        case chartData = "chart_data"
+        case transactions
+    }
+}
+
+struct RemoteProfitability: Decodable {
+    let total: Double
+    let annual: Double
+    let period: RemotePeriod
+}
+
+struct RemotePeriod: Decodable {
+    let startDate: String
+    let endDate: String
+
+    enum CodingKeys: String, CodingKey {
+        case startDate = "start_date"
+        case endDate = "end_date"
+    }
+}
+
+struct RemoteChartDataPoint: Decodable {
+    let date: String
+    let value: Double
+}
+
+struct RemoteTransaction: Decodable {
     let id: String
-    let name: String
-    let type: String
-    let category: String
-    let currentBalance: Double
-    let initialInvestment: Double
-    let totalProfitability: Double
-    let annualProfitability: Double
-    let liquidity: String
-    let maturityDate: String?
-    let chartData: [ChartDataPoint]
-    let transactions: [TransactionData]
-
-    struct ChartDataPoint: Codable {
-        let date: String
-        let value: Double
-    }
-
-    struct TransactionData: Codable {
-        let id: String
-        let description: String
-        let date: String
-        let value: Double
-    }
+    let description: String
+    let date: String
+    let value: Double
 }

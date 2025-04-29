@@ -210,7 +210,7 @@ struct SaldoView: View {
         case "cartao":
             CartaoDetailView(account: account)
         case "investimento":
-            InvestimentoDetailView(investmentId: investmentId(for: account))
+            InvestimentoDetailView(investmentId: account.id)
         default:
             VStack {
                 Text("Tipo de conta não suportado.")
