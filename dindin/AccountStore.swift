@@ -1,4 +1,3 @@
-
 import Foundation
 import RealmSwift
 
@@ -78,6 +77,11 @@ class AccountStore: ObservableObject {
                 let remoteAccounts = try JSONDecoder().decode([RemoteAccount].self, from: data)
                 print("✅ [API] Contas recebidas da API - quantidade: \(remoteAccounts.count)")
 
+                // Debug: Imprimir o JSON recebido
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("📄 [DEBUG] JSON recebido: \(jsonString)")
+                }
+
                 await MainActor.run {
                     self.updateLocalAccounts(with: remoteAccounts)
                 }
@@ -92,6 +96,15 @@ class AccountStore: ObservableObject {
             }
 
             print("❌ [API] Erro ao buscar contas: \(error.localizedDescription)")
+            if let decodingError = error as? DecodingError {
+                print("🔍 Detalhes do erro de decodificação: \(decodingError)")
+                
+                // Debug: Imprimir o JSON recebido em caso de erro
+                if let data = try? error.localizedDescription.data(using: .utf8),
+                   let jsonString = String(data: data, encoding: .utf8) {
+                    print("📄 [DEBUG] JSON com erro: \(jsonString)")
+                }
+            }
         }
 
         let elapsed = Date().timeIntervalSince(startTime)
@@ -103,16 +116,12 @@ class AccountStore: ObservableObject {
 
         do {
             try realm.write {
+                // Remove todas as contas existentes
                 realm.delete(realm.objects(Account.self))
+                
+                // Adiciona as novas contas usando o método de conversão
                 for remote in remoteAccounts {
-                    let account = Account()
-                    account.id = "\(remote.name)-\(remote.category)"
-                    account.name = remote.name
-                    account.balance = remote.balance
-                    account.icon = remote.icon
-                    account.category = remote.category
-                    account.type = remote.type
-                    account.isSynced = true
+                    let account = remote.toLocalAccount()
                     realm.add(account, update: .modified)
                 }
             }
